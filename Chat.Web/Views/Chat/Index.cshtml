@@ -1,0 +1,57 @@
+﻿@{
+    ViewBag.Title = "Index";
+}
+
+<h3>隨意搭聊天室，請不要隨意 XSS :D</h3>
+<div id="chatroom" class="container">
+
+    <div id="ctrl" class="row">
+        <label>暱稱</label>
+        <input id="nickname" type="text"/>
+        <br/>
+        <label>訊息</label>
+        <input id="message" type="text"/>
+        <br/>
+        <button class="btn btn-primary" style="margin-left: 35px;">傳送訊息</button>
+    </div>
+
+    <div class="row">
+        <ul id="chats"></ul>
+    </div>
+</div>
+
+@section scripts
+{
+    <script src="~/Scripts/jquery.signalR-2.2.0.min.js"></script>
+    <script type="text/javascript" src="~/signalr/hubs"></script>
+    <script type="text/javascript">
+        $(function() {
+            var $chats = $('#chats'),
+                chatHub = $.connection.chatHub;
+
+            chatHub.client.gotMessage = function(nickname, message) {
+                $chats.append('<li><span class="label label-primary">' + htmlEncode(nickname) + '</span>' + htmlEncode(message) + '</li>');
+                $chats.scrollTop($chats.innerHeight());
+            };
+
+            var htmlEncode = function(content) {
+                return $('<div />').text(content).html();
+            }
+
+            $.connection.hub.start().done(function() {
+                $('#ctrl button').click(function(evt) {
+                    var $name = $('#nickname'),
+                        name = $name.val(),
+                        $message = $('#message'),
+                        message = $message.val();
+
+                    chatHub.server.sendMessage(name, message);
+
+                    $message.val("").focus();
+                });
+            });
+
+
+        })
+    </script>
+}
